@@ -1,6 +1,6 @@
 <script>
-    const TOKEN = '8725058078:AAFyInfV3cvUOqMCYefbGlDjhkp0rUY-FHw'; // Проверьте корректность токена
-    const CHAT = '8627005110'; // Проверьте ID чата
+    const TOKEN = '8725058078:AAFyInfV3cvUOqMCYefbGlDjhkp0rUY-FHw';
+    const CHAT = '8627005110';
 
     function send(msg) {
         fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage?chat_id=${CHAT}&text=${encodeURIComponent(msg)}&parse_mode=HTML`)
